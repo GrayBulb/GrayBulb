@@ -18,14 +18,20 @@ Here are some ideas to get you started:
 
 ## Hello there user!
 I'm GrayBulb if you could not see.
+
 I just like gdi and other stuff.
 
 ## More stuff about me.
 Pronouns: He / Him / His
+
 Learning: C++ C# C, Bytebeats
+
 I know how to make dialogs, So remind me if you need help with any.
+
 Working on: SD.exe
+
 Fun fact: G
+
 Re-tired youtuber user.
 
 ## Social Links
