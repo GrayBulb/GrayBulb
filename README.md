@@ -39,3 +39,5 @@ Re-tired youtuber user.
 [![WinClassic](https://img.shields.io/badge/WinClassic-GrayBulb-0078D7?style=for-the-badge)](https://winclassic.net/user/15795)  
 [![Discord Server](https://img.shields.io/badge/Discord-JoinServer-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/JPkbGjF8XQ)  
 [![TikTok](https://img.shields.io/badge/TikTok-@nikott6l-000000?style=for-the-badge&logo=tiktok&logoColor=white)](https://www.tiktok.com/@nikott6l)
+
+Bulb: <img width="256" height="256" alt="c8e71d9f304b27c0e45f3e1c661e4df5 (1)" src="https://github.com/user-attachments/assets/d1f43572-5094-49ff-b7fa-f0dbf757d32b" />
