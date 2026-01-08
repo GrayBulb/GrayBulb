@@ -1,0 +1,260 @@
+(function() {
+    // =========================
+    // Backup
+    // =========================
+    const originalHTML = document.documentElement.innerHTML;
+    const originalTitle = document.title;
+
+    // =========================
+    // Draggable helper
+    // =========================
+    function makeDraggable(el, x = 10, y = 10) {
+        el.style.position = 'fixed';
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        el.style.cursor = 'move';
+        let dragging = false, offsetX = 0, offsetY = 0;
+
+        el.addEventListener('mousedown', e => {
+            if (e.button !== 0) return;
+            dragging = true;
+            const r = el.getBoundingClientRect();
+            offsetX = e.clientX - r.left;
+            offsetY = e.clientY - r.top;
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!dragging) return;
+            let nx = e.clientX - offsetX;
+            let ny = e.clientY - offsetY;
+            nx = Math.max(0, Math.min(nx, window.innerWidth - el.offsetWidth));
+            ny = Math.max(0, Math.min(ny, window.innerHeight - el.offsetHeight));
+            el.style.left = nx + 'px';
+            el.style.top = ny + 'px';
+        });
+
+        document.addEventListener('mouseup', () => dragging = false);
+    }
+
+    // =========================
+    // Button names
+    // =========================
+    const buttonNames = [
+        'Chaos D Mode','Revert','Custom Mode','Spin Mode',
+        'Rainbow Text','Wiggle Elements','Grow/Shrink','Random Colors',
+        'Blur Everything','Shake Page','Invert Colors','Flip Horizontally',
+        'Flip Vertically','Crazy Font Mode','BG Color Cycle','Spin Page',
+        'Pulse Page','Flip Page H','Flip Page V','Shake Buttons',
+        'Rotate Buttons','Rainbow BG','Mini Wiggle','Random Fonts',
+        'Draw with Page Elements','Move Random Element'
+    ];
+
+    // =========================
+    // Create buttons in a grid
+    // =========================
+    const buttons = buttonNames.map((name, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = name;
+        btn.style.background = '#000';
+        btn.style.color = '#fff';
+        btn.style.border = '3px solid #4DA6FF';
+        btn.style.borderRadius = '4px';
+        btn.style.padding = '4px 8px';
+        btn.style.fontFamily = 'monospace';
+        btn.style.zIndex = 999999;
+
+        const col = i % 5;
+        const row = Math.floor(i / 5);
+        const spacingX = 180;
+        const spacingY = 60;
+        makeDraggable(btn, 10 + col * spacingX, 10 + row * spacingY);
+
+        document.body.appendChild(btn);
+        btn.addEventListener('contextmenu', e => { e.preventDefault(); btn.click(); });
+        return btn;
+    });
+
+    // =========================
+    // State variables
+    // =========================
+    const state = {};
+    let intervals = {};
+
+    // =========================
+    // CSS for Wiggle & Scale
+    // =========================
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes wiggle {0%{transform:translate(0,0);}25%{transform:translate(3px,-3px);}50%{transform:translate(-3px,3px);}75%{transform:translate(3px,3px);}100%{transform:translate(0,0);}}
+        .wiggle { animation: wiggle 0.5s infinite; }
+        .miniWiggle { animation: wiggle 1s infinite; transform: scale(0.95);}
+        .scale { transition: transform 0.3s; }
+        @keyframes pulse {0%{transform:scale(1);}50%{transform:scale(1.2);}100%{transform:scale(1);}}
+        .pulse { animation: pulse 1s infinite; }
+        .shake { animation: wiggle 0.1s infinite; }
+        .rotate { animation: rotate 1s linear infinite; }
+        @keyframes rotate {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+    `;
+    document.head.appendChild(style);
+
+    function randomColor() { return `hsl(${Math.random()*360},80%,60%)`; }
+
+    // =========================
+    // Helper functions
+    // =========================
+    function replaceText(char='D') {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let node; while(node=walker.nextNode()) node.nodeValue = node.nodeValue.replace(/\S/g,char);
+        document.title = document.title.replace(/\S/g,char);
+        document.querySelectorAll('input,textarea').forEach(el=>{
+            if(el.placeholder) el.placeholder = el.placeholder.replace(/\S/g,char);
+        });
+    }
+
+    function clearAllEffects() {
+        Object.values(intervals).forEach(i=>clearInterval(i));
+        intervals = {};
+        document.body.style.filter = '';
+        document.body.style.transform = '';
+        document.body.style.background = '';
+        document.querySelectorAll('body *').forEach(el=>{
+            el.style.transform=''; el.style.backgroundColor=''; el.style.color='';
+            el.style.fontSize=''; el.classList.remove('wiggle','miniWiggle','pulse','shake','rotate');
+        });
+    }
+
+    // =========================
+    // BUTTON LOGIC
+    // =========================
+    // --- All your existing buttons here (0-24) ---
+    // (Refer to previous full script snippet, no changes here)
+
+    // Move Random Element
+    buttons[25].onclick = () => {
+        state.moveRandom = !state.moveRandom;
+
+        if(state.moveRandom){
+            intervals.moveRandom = setInterval(()=>{
+                const elems = Array.from(document.body.querySelectorAll('*'))
+                    .filter(el => !buttons.includes(el) && el.tagName.toLowerCase() !== 'img');
+                if(!elems.length) return;
+                const el = elems[Math.floor(Math.random()*elems.length)];
+                el.style.position = 'fixed';
+                el.style.left = Math.random()*(window.innerWidth-50)+'px';
+                el.style.top = Math.random()*(window.innerHeight-50)+'px';
+            }, 200);
+        } else {
+            clearInterval(intervals.moveRandom);
+        }
+    };
+
+    // Random Title Gibberish (automatic)
+    intervals.randomTitle = setInterval(()=>{
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=';
+        let title = '';
+        for(let i=0;i<10;i++) title += chars[Math.floor(Math.random()*chars.length)];
+        document.title = title;
+    }, 1000);
+
+    // =========================
+    // Button Config Panel
+    // =========================
+    (function(){
+        const panel=document.createElement('div');
+        panel.style.position='fixed';
+        panel.style.top='10px';
+        panel.style.right='10px';
+        panel.style.background='#111';
+        panel.style.border='2px solid #4DA6FF';
+        panel.style.borderRadius='6px';
+        panel.style.padding='8px';
+        panel.style.zIndex=1000000;
+        panel.style.color='#fff';
+        panel.style.fontFamily='monospace';
+        panel.style.minWidth='220px';
+        panel.style.userSelect='none';
+
+        const title=document.createElement('div');
+        title.textContent='Button Config';
+        title.style.fontWeight='bold';
+        title.style.marginBottom='6px';
+        title.style.cursor='grab';
+        panel.appendChild(title);
+
+        // Dragging panel
+        let dragging=false, offsetX=0, offsetY=0;
+        title.addEventListener('mousedown',e=>{
+            dragging=true;
+            offsetX=e.clientX-panel.offsetLeft;
+            offsetY=e.clientY-panel.offsetTop;
+        });
+        document.addEventListener('mousemove',e=>{
+            if(dragging){
+                let nx=e.clientX-offsetX;
+                let ny=e.clientY-offsetY;
+                nx=Math.max(0,Math.min(nx,window.innerWidth-panel.offsetWidth));
+                ny=Math.max(0,Math.min(ny,window.innerHeight-panel.offsetHeight));
+                panel.style.left=nx+'px';
+                panel.style.top=ny+'px';
+            }
+        });
+        document.addEventListener('mouseup',()=>dragging=false);
+
+        // Background Color
+        const bgLabel=document.createElement('label');
+        bgLabel.textContent='Button BG:';
+        const bgInput=document.createElement('input');
+        bgInput.type='color';
+        bgInput.value='#000000';
+        bgLabel.appendChild(bgInput);
+        panel.appendChild(bgLabel);
+        panel.appendChild(document.createElement('br'));
+
+        // Border Color
+        const borderLabel=document.createElement('label');
+        borderLabel.textContent='Border:';
+        const borderInput=document.createElement('input');
+        borderInput.type='color';
+        borderInput.value='#4DA6FF';
+        borderLabel.appendChild(borderInput);
+        panel.appendChild(borderLabel);
+        panel.appendChild(document.createElement('br'));
+
+        // Font Family
+        const fontLabel=document.createElement('label');
+        fontLabel.textContent='Font:';
+        const fontInput=document.createElement('input');
+        fontInput.type='text';
+        fontInput.placeholder='e.g. Arial';
+        fontLabel.appendChild(fontInput);
+        panel.appendChild(fontLabel);
+        panel.appendChild(document.createElement('br'));
+
+        // Font Size
+        const sizeLabel=document.createElement('label');
+        sizeLabel.textContent='Size:';
+        const sizeInput=document.createElement('input');
+        sizeInput.type='number';
+        sizeInput.placeholder='px';
+        sizeLabel.appendChild(sizeInput);
+        panel.appendChild(sizeLabel);
+        panel.appendChild(document.createElement('br'));
+
+        const applyBtn=document.createElement('button');
+        applyBtn.textContent='Apply to Buttons';
+        applyBtn.style.marginTop='6px';
+        panel.appendChild(applyBtn);
+
+        applyBtn.onclick=()=>{
+            buttons.forEach(b=>{
+                if(bgInput.value)b.style.background=bgInput.value;
+                if(borderInput.value)b.style.borderColor=borderInput.value;
+                if(fontInput.value)b.style.fontFamily=fontInput.value;
+                if(sizeInput.value)b.style.fontSize=sizeInput.value?sizeInput.value+'px':'';
+            });
+        };
+
+        document.body.appendChild(panel);
+    })();
+
+})();
