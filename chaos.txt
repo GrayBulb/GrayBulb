@@ -40,13 +40,13 @@
     // Button names
     // =========================
     const buttonNames = [
-        'Chaos D Mode','Revert','Custom Mode','Spin Mode',
-        'Rainbow Text','Wiggle Elements','Grow/Shrink','Random Colors',
-        'Blur Everything','Shake Page','Invert Colors','Flip Horizontally',
-        'Flip Vertically','Crazy Font Mode','BG Color Cycle','Spin Page',
-        'Pulse Page','Flip Page H','Flip Page V','Shake Buttons',
-        'Rotate Buttons','Rainbow BG','Mini Wiggle','Random Fonts',
-        'Draw with Page Elements','Move Random Element'
+        'Chaos D Mode', 'Revert', 'Custom Mode', 'Spin Mode',
+        'Rainbow Text', 'Wiggle Elements', 'Grow/Shrink', 'Random Colors',
+        'Blur Everything', 'Shake Page', 'Invert Colors', 'Flip Horizontally',
+        'Flip Vertically', 'Crazy Font Mode', 'BG Color Cycle', 'Spin Page',
+        'Pulse Page', 'Flip Page H', 'Flip Page V', 'Shake Buttons',
+        'Rotate Buttons', 'Rainbow BG', 'Mini Wiggle', 'Random Fonts',
+        'Draw with Page Elements', 'Move Random Element'
     ];
 
     // =========================
@@ -98,6 +98,12 @@
     document.head.appendChild(style);
 
     function randomColor() { return `hsl(${Math.random()*360},80%,60%)`; }
+    function randomChar(len = 5) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let s = '';
+        for(let i=0;i<len;i++) s += chars[Math.floor(Math.random()*chars.length)];
+        return s;
+    }
 
     // =========================
     // Helper functions
@@ -124,137 +130,228 @@
     }
 
     // =========================
-    // BUTTON LOGIC
+    // Button Config GUI
     // =========================
-    // --- All your existing buttons here (0-24) ---
-    // (Refer to previous full script snippet, no changes here)
+    const panel=document.createElement('div');
+    panel.style.position='fixed';
+    panel.style.top='10px';
+    panel.style.right='10px';
+    panel.style.background='#111';
+    panel.style.border='2px solid #4DA6FF';
+    panel.style.borderRadius='6px';
+    panel.style.padding='8px';
+    panel.style.zIndex=1000000;
+    panel.style.color='#fff';
+    panel.style.fontFamily='monospace';
+    panel.style.minWidth='220px';
+    panel.style.userSelect='none';
 
-    // Move Random Element
+    const panelTitle=document.createElement('div');
+    panelTitle.textContent='Button Config';
+    panelTitle.style.fontWeight='bold';
+    panelTitle.style.marginBottom='6px';
+    panelTitle.style.cursor='grab';
+    panel.appendChild(panelTitle);
+
+    let dragging=false, offsetX=0, offsetY=0;
+    panelTitle.addEventListener('mousedown',e=>{
+        dragging=true;
+        offsetX=e.clientX-panel.offsetLeft;
+        offsetY=e.clientY-panel.offsetTop;
+    });
+    document.addEventListener('mousemove',e=>{
+        if(dragging){
+            let nx=e.clientX-offsetX;
+            let ny=e.clientY-offsetY;
+            nx=Math.max(0, Math.min(nx, window.innerWidth-panel.offsetWidth));
+            ny=Math.max(0, Math.min(ny, window.innerHeight-panel.offsetHeight));
+            panel.style.left=nx+'px';
+            panel.style.top=ny+'px';
+        }
+    });
+    document.addEventListener('mouseup',()=>dragging=false);
+
+    // Background Color
+    const bgLabel=document.createElement('label');
+    bgLabel.textContent='Button BG:';
+    const bgInput=document.createElement('input');
+    bgInput.type='color';
+    bgInput.value='#000000';
+    bgLabel.appendChild(bgInput);
+    panel.appendChild(bgLabel);
+    panel.appendChild(document.createElement('br'));
+
+    // Border Color
+    const borderLabel=document.createElement('label');
+    borderLabel.textContent='Border:';
+    const borderInput=document.createElement('input');
+    borderInput.type='color';
+    borderInput.value='#4DA6FF';
+    borderLabel.appendChild(borderInput);
+    panel.appendChild(borderLabel);
+    panel.appendChild(document.createElement('br'));
+
+    // Font Family
+    const fontLabel=document.createElement('label');
+    fontLabel.textContent='Font:';
+    const fontInput=document.createElement('input');
+    fontInput.type='text';
+    fontInput.placeholder='e.g. Arial';
+    fontLabel.appendChild(fontInput);
+    panel.appendChild(fontLabel);
+    panel.appendChild(document.createElement('br'));
+
+    // Font Size
+    const sizeLabel=document.createElement('label');
+    sizeLabel.textContent='Size:';
+    const sizeInput=document.createElement('input');
+    sizeInput.type='number';
+    sizeInput.placeholder='px';
+    sizeLabel.appendChild(sizeInput);
+    panel.appendChild(sizeLabel);
+    panel.appendChild(document.createElement('br'));
+
+    const applyBtn=document.createElement('button');
+    applyBtn.textContent='Apply to Buttons';
+    applyBtn.style.marginTop='6px';
+    panel.appendChild(applyBtn);
+
+    applyBtn.onclick=()=>{
+        buttons.forEach(b=>{
+            if(bgInput.value) b.style.background=bgInput.value;
+            if(borderInput.value) b.style.borderColor=borderInput.value;
+            if(fontInput.value) b.style.fontFamily=fontInput.value;
+            if(sizeInput.value) b.style.fontSize=sizeInput.value?sizeInput.value+'px':'';
+        });
+    };
+
+    document.body.appendChild(panel);
+
+    // =========================
+    // Button Logic
+    // =========================
+
+    // Revert
+    buttons[1].onclick = () => {
+        document.documentElement.innerHTML = originalHTML;
+        document.title = originalTitle;
+        clearAllEffects();
+        buttons.forEach(b => document.body.appendChild(b));
+        document.body.appendChild(panel);
+    };
+
+    // Chaos D Mode
+    buttons[0].onclick = () => {
+        state.chaos = !state.chaos;
+        replaceText(state.chaos ? 'D' : ' ');
+    };
+
+    // Custom Mode
+    buttons[2].onclick = () => {
+        const char = prompt("Enter a character for Custom Mode:", "F") || "F";
+        replaceText(char);
+    };
+
+    // Spin Mode
+    buttons[3].onclick = () => {
+        state.spin = !state.spin;
+        if (state.spin) {
+            let angle = 0;
+            intervals.spin = setInterval(() => {
+                angle += 10;
+                document.querySelectorAll('body > *').forEach(el => {
+                    if (!buttons.includes(el)) el.style.transform = `rotate(${angle}deg)`;
+                });
+            }, 50);
+        } else {
+            clearInterval(intervals.spin);
+            document.querySelectorAll('body > *').forEach(el => {
+                if (!buttons.includes(el)) el.style.transform = '';
+            });
+        }
+    };
+
+    // Rainbow Text
+    buttons[4].onclick = () => {
+        state.rainbowText = !state.rainbowText;
+        if (state.rainbowText) {
+            intervals.rainbowText = setInterval(() => {
+                document.querySelectorAll('body *').forEach(el => {
+                    if (!buttons.includes(el) && el.tagName.toLowerCase() !== 'img') el.style.color = randomColor();
+                });
+            }, 300);
+        } else {
+            clearInterval(intervals.rainbowText);
+            document.querySelectorAll('body *').forEach(el => {
+                if (!buttons.includes(el) && el.tagName.toLowerCase() !== 'img') el.style.color = '';
+            });
+        }
+    };
+
+    // Wiggle Elements
+    buttons[5].onclick = () => {
+        state.wiggle = !state.wiggle;
+        document.querySelectorAll('body *').forEach(el => {
+            if (!buttons.includes(el) && el.tagName.toLowerCase() !== 'img') el.classList.toggle('wiggle', state.wiggle);
+        });
+    };
+
+    // Move Random Element (new button)
     buttons[25].onclick = () => {
         state.moveRandom = !state.moveRandom;
-
-        if(state.moveRandom){
-            intervals.moveRandom = setInterval(()=>{
-                const elems = Array.from(document.body.querySelectorAll('*'))
-                    .filter(el => !buttons.includes(el) && el.tagName.toLowerCase() !== 'img');
-                if(!elems.length) return;
-                const el = elems[Math.floor(Math.random()*elems.length)];
+        if (state.moveRandom) {
+            intervals.moveRandom = setInterval(() => {
+                const elems = Array.from(document.body.querySelectorAll('*')).filter(el => !buttons.includes(el) && el.tagName.toLowerCase() !== 'img');
+                if (!elems.length) return;
+                const el = elems[Math.floor(Math.random() * elems.length)];
                 el.style.position = 'fixed';
-                el.style.left = Math.random()*(window.innerWidth-50)+'px';
-                el.style.top = Math.random()*(window.innerHeight-50)+'px';
+                el.style.left = Math.random() * (window.innerWidth - el.offsetWidth) + 'px';
+                el.style.top = Math.random() * (window.innerHeight - el.offsetHeight) + 'px';
             }, 200);
         } else {
             clearInterval(intervals.moveRandom);
         }
     };
 
-    // Random Title Gibberish (automatic)
-    intervals.randomTitle = setInterval(()=>{
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=';
-        let title = '';
-        for(let i=0;i<10;i++) title += chars[Math.floor(Math.random()*chars.length)];
-        document.title = title;
-    }, 1000);
+    // Draw with Page Elements
+    buttons[24].onclick = () => {
+        if (state.drawElements) return;
+        state.drawElements = true;
+        const clones = [];
 
-    // =========================
-    // Button Config Panel
-    // =========================
-    (function(){
-        const panel=document.createElement('div');
-        panel.style.position='fixed';
-        panel.style.top='10px';
-        panel.style.right='10px';
-        panel.style.background='#111';
-        panel.style.border='2px solid #4DA6FF';
-        panel.style.borderRadius='6px';
-        panel.style.padding='8px';
-        panel.style.zIndex=1000000;
-        panel.style.color='#fff';
-        panel.style.fontFamily='monospace';
-        panel.style.minWidth='220px';
-        panel.style.userSelect='none';
+        function cloneAtCursor(e) {
+            const elems = Array.from(document.body.querySelectorAll('*')).filter(el => !buttons.includes(el) && el.tagName.toLowerCase() !== 'img');
+            if (!elems.length) return;
+            const el = elems[Math.floor(Math.random() * elems.length)];
+            const clone = el.cloneNode(true);
+            clone.style.position = 'fixed';
+            clone.style.pointerEvents = 'none';
+            clone.style.left = e.clientX + 'px';
+            clone.style.top = e.clientY + 'px';
+            clone.style.margin = '0';
+            clone.style.zIndex = 999998;
+            document.body.appendChild(clone);
+            clones.push(clone);
+        }
 
-        const title=document.createElement('div');
-        title.textContent='Button Config';
-        title.style.fontWeight='bold';
-        title.style.marginBottom='6px';
-        title.style.cursor='grab';
-        panel.appendChild(title);
-
-        // Dragging panel
-        let dragging=false, offsetX=0, offsetY=0;
-        title.addEventListener('mousedown',e=>{
-            dragging=true;
-            offsetX=e.clientX-panel.offsetLeft;
-            offsetY=e.clientY-panel.offsetTop;
-        });
-        document.addEventListener('mousemove',e=>{
-            if(dragging){
-                let nx=e.clientX-offsetX;
-                let ny=e.clientY-offsetY;
-                nx=Math.max(0,Math.min(nx,window.innerWidth-panel.offsetWidth));
-                ny=Math.max(0,Math.min(ny,window.innerHeight-panel.offsetHeight));
-                panel.style.left=nx+'px';
-                panel.style.top=ny+'px';
+        const stopDrawing = e => {
+            if (e.key.toLowerCase() === 'd') {
+                state.drawElements = false;
+                document.removeEventListener('mousemove', cloneAtCursor);
+                document.removeEventListener('keydown', stopDrawing);
+                clones.forEach(c => c.remove());
             }
-        });
-        document.addEventListener('mouseup',()=>dragging=false);
-
-        // Background Color
-        const bgLabel=document.createElement('label');
-        bgLabel.textContent='Button BG:';
-        const bgInput=document.createElement('input');
-        bgInput.type='color';
-        bgInput.value='#000000';
-        bgLabel.appendChild(bgInput);
-        panel.appendChild(bgLabel);
-        panel.appendChild(document.createElement('br'));
-
-        // Border Color
-        const borderLabel=document.createElement('label');
-        borderLabel.textContent='Border:';
-        const borderInput=document.createElement('input');
-        borderInput.type='color';
-        borderInput.value='#4DA6FF';
-        borderLabel.appendChild(borderInput);
-        panel.appendChild(borderLabel);
-        panel.appendChild(document.createElement('br'));
-
-        // Font Family
-        const fontLabel=document.createElement('label');
-        fontLabel.textContent='Font:';
-        const fontInput=document.createElement('input');
-        fontInput.type='text';
-        fontInput.placeholder='e.g. Arial';
-        fontLabel.appendChild(fontInput);
-        panel.appendChild(fontLabel);
-        panel.appendChild(document.createElement('br'));
-
-        // Font Size
-        const sizeLabel=document.createElement('label');
-        sizeLabel.textContent='Size:';
-        const sizeInput=document.createElement('input');
-        sizeInput.type='number';
-        sizeInput.placeholder='px';
-        sizeLabel.appendChild(sizeInput);
-        panel.appendChild(sizeLabel);
-        panel.appendChild(document.createElement('br'));
-
-        const applyBtn=document.createElement('button');
-        applyBtn.textContent='Apply to Buttons';
-        applyBtn.style.marginTop='6px';
-        panel.appendChild(applyBtn);
-
-        applyBtn.onclick=()=>{
-            buttons.forEach(b=>{
-                if(bgInput.value)b.style.background=bgInput.value;
-                if(borderInput.value)b.style.borderColor=borderInput.value;
-                if(fontInput.value)b.style.fontFamily=fontInput.value;
-                if(sizeInput.value)b.style.fontSize=sizeInput.value?sizeInput.value+'px':'';
-            });
         };
 
-        document.body.appendChild(panel);
-    })();
+        document.addEventListener('mousemove', cloneAtCursor);
+        document.addEventListener('keydown', stopDrawing);
+    };
+
+    // =========================
+    // Auto-Random Title (starts immediately)
+    // =========================
+    intervals.randomTitle = setInterval(() => {
+        document.title = randomChar(8);
+    }, 1000);
 
 })();
